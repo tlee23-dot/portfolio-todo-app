@@ -1,30 +1,34 @@
-<!DOCTYPE html> 
-<html lang ="en"> 
+<!DOCTYPE html>
+<html lang="en">
 <head> 
-    <meta charset = "UTF-8"> 
-    <meta name = "viewport" content = "width=device-width, initial-scale=1.0">
-    <title> Personnal Todo App </title>
-
-<!-- link to style css for the ui -->
-    <link rel ="stylesheet" href = "style.css"> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Todo App</title>
+    <!-- Link to CSS styling -->
+    <link rel="stylesheet" href="style.css"> 
 </head>
-
 <body> 
-    <div class = "todo-container"> 
-        <h1> Task Tracker</h1>
-        <div class = "input-container"> 
-            <input type ="text" id = "todo-input" placeholder = "What needs to be done?"> 
-            <button id = "add-btn"> Add Task </button>
-            <button id = "delete-btn"> Delete Task </button>
-            <button id = 'search-btn'> Search Task </button>
+    <div class="todo-container"> 
+        <h1>Task Tracker</h1>
+        
+        <!-- Main Input Section -->
+        <div class="todo-input-area"> 
+            <input type="text" id="todo-input" placeholder="What needs to be done?"> 
+            <button id="add-btn">Add Task</button>
+        </div>
+
+        <!-- Extra Action Buttons -->
+        <div class="action-buttons">
+            <button id="search-btn" class="alt-btn">Search Task</button>
+            <button id="clear-btn" class="alt-btn delete-all">Clear All</button>
         </div>
        
-
-    <ul id = todo-lists>
-        <!--javascript will add the tasks here --> 
-    </ul>
+        <!-- Container for JavaScript-generated tasks -->
+        <ul id="todo-list">
+            <!-- Tasks with timers will be injected here --> 
+        </ul>
     </div>
-    <script src = "app.js"></script>
 
+    <script src="app.js"></script>
 </body>
 </html>

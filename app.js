@@ -1,89 +1,160 @@
-
-//1. do stuff with the  buttons and the input field 
-
+// 1. Select user interface elements
 const todoInput = document.getElementById('todo-input'); 
 const addBtn = document.getElementById('add-btn'); 
-const todoList = document.getElementById('todo-list'); 
+const todoList = document.getElementById('todo-list'); // Mapped correctly (singular)
+const searchBtn = document.getElementById('search-btn');
+const clearBtn = document.getElementById('clear-btn');
 
-//2. load local storage if any 
-let todos = JSON.parse(localStorage.getItem('todos')) || [];
+// 2. Load local storage list. Auto-converts old string arrays to our new object structure.
+let rawTodos = JSON.parse(localStorage.getItem('todos')) || [];
+let todos = rawTodos.map(item => {
+    if (typeof item === 'string') {
+        return { text: item, timeSpent: 0, isRunning: false };
+    }
+    return item;
+});
 
+// Real-time search filter state
+let searchQuery = "";
 
+// 3. Helper format function to convert total seconds into MM:SS format
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
 
-//3. Read and display the todos from local storage
+// 4. Read and Display function
 function displayTodos() {
-    //clear the list for no duplicates 
     todoList.innerHTML = ''; 
 
-
-    //now go into the todo array, loop 
     todos.forEach((todo, index) => {
+        // If a search query is typed, skip any tasks that do not match the query
+        if (searchQuery && !todo.text.toLowerCase().includes(searchQuery)) {
+            return;
+        }
 
-        //create a list item 
         const li = document.createElement('li'); 
 
-        //add a task text 
-        const taskText = document.createElement('span');
-        taskText.textContent = todo;
-        li.appendChild(taskText);
+        // Create container holding text and the running stopwatch display
+        const taskDetails = document.createElement('div');
+        taskDetails.classList.add('task-details');
 
-        //create a delete button
+        const taskText = document.createElement('span');
+        taskText.textContent = todo.text;
+        taskText.classList.add('task-text');
+        
+        const timerDisplay = document.createElement('span');
+        timerDisplay.textContent = `Time: ${formatTime(todo.timeSpent)}`;
+        timerDisplay.classList.add('timer-display');
+
+        taskDetails.appendChild(taskText);
+        taskDetails.appendChild(timerDisplay);
+        li.appendChild(taskDetails);
+
+        // Controls container (Timer Button + Delete Button)
+        const taskControls = document.createElement('div');
+        taskControls.classList.add('task-controls');
+
+        // Create the Start/Pause toggle button
+        const timerBtn = document.createElement('button');
+        timerBtn.classList.add('timer-btn');
+        if (todo.isRunning) {
+            timerBtn.textContent = 'Pause';
+            timerBtn.classList.add('pause');
+        } else {
+            timerBtn.textContent = 'Start';
+            timerBtn.classList.add('start');
+        }
+        timerBtn.onclick = () => toggleTimer(index);
+
+        // Create the individual delete button
         const deleteBtn = document.createElement('button'); 
         deleteBtn.textContent = 'Delete';
         deleteBtn.classList.add('delete-btn');
+        deleteBtn.onclick = () => deleteTodo(index); // Fixed typo: changed "oneclick" to "onclick"
 
-        //tie the specific item to the delete action 
-        deleteBtn.oneclick = () => deleteTodo(index); 
+        taskControls.appendChild(timerBtn);
+        taskControls.appendChild(deleteBtn);
+        li.appendChild(taskControls);
 
-        //list too 
-        li.appendChild(deleteBtn);
         todoList.appendChild(li);
-
     }); 
-
 }
 
-
-//4. create to grab the text field value  and add to the list 
+// 5. Create a Task (stores details as objects)
 function addTodo() {
     const taskText = todoInput.value.trim();
     
-    // Safety check: Don't let users add completely blank tasks
-    if (taskText === '') {
-        return;
-    }
+    if (taskText === '') return;
 
-    todos.push(taskText);
-    saveAndRender();
+    todos.push({
+        text: taskText,
+        timeSpent: 0,
+        isRunning: false
+    });
     
-    // Clear out the text field so the user can type the next item immediately
+    saveAndRender();
     todoInput.value = '';
 }
 
-// 5. DELETE: Function to remove an item from the array using its position index
+// 6. Delete a single task
 function deleteTodo(index) {
-    // splice removes exactly 1 element at the given index position
     todos.splice(index, 1);
     saveAndRender();
 }
 
-// Helper function to update the browser storage and refresh the layout at the same time
+// 7. Toggle stopwatch state (Start/Pause)
+function toggleTimer(index) {
+    todos[index].isRunning = !todos[index].isRunning;
+    saveAndRender();
+}
+
+// 8. Search implementation: filters screen tasks matching the input field text
+searchBtn.onclick = () => {
+    searchQuery = todoInput.value.trim().toLowerCase();
+    displayTodos();
+};
+
+// 9. Clear All Tasks implementation
+clearBtn.onclick = () => {
+    if (confirm("Are you sure you want to clear all tasks? This resets your timers.")) {
+        todos = [];
+        saveAndRender();
+    }
+};
+
+// Global background scheduler ticking every second to update running tasks
+setInterval(() => {
+    let activeTick = false;
+    todos.forEach(todo => {
+        if (todo.isRunning) {
+            todo.timeSpent++;
+            activeTick = true;
+        }
+    });
+    // Only save and re-render if at least one timer is running
+    if (activeTick) {
+        localStorage.setItem('todos', JSON.stringify(todos));
+        displayTodos();
+    }
+}, 1000);
+
+// Helper function to update system memory and sync views
 function saveAndRender() {
     localStorage.setItem('todos', JSON.stringify(todos));
     displayTodos();
 }
 
-// 6. Listen for events (clicks and keystrokes)
+// Bind Enter and Click events
 addBtn.addEventListener('click', addTodo);
-
-// Let the user press the physical "Enter" key inside the text box instead of clicking the button
 todoInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         addTodo();
     }
 });
 
-// Run this function once immediately when the webpage loads up to reveal past saved tasks
+// Run initial scan
 displayTodos();
 
 
